@@ -10,6 +10,10 @@ import {
   SECRETS
 } from "~/constants/index.server";
 
+if (!SECRETS) {
+  throw new Error("SECRETS must be set");
+}
+
 const sessionStorage = createCookieSessionStorage({
   cookie: {
     name: "_remix_session",
