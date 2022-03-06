@@ -9,45 +9,66 @@ datasource db {
   referentialIntegrity = "prisma"
 }
 
-model User {
-  id              String               @id @default(uuid())
-  email           String               @db.VarChar(255)
-  firstName       String?              @db.VarChar(255)
-  lastName        String?              @db.VarChar(255)
-  createdAt       DateTime             @default(now())
-  updatedAt       DateTime             @updatedAt
-  favoriteRecipes FavoritesOnRecipes[]
-  recentlyViewed  Recipe[]
-  mealNotes       Note[]
-  isAdmin         Boolean              @default(false)
+enum Role {
+  ADMIN
+  MEMBER
 }
 
-model FavoritesOnRecipes {
-  recipeId Int
-  recipe   Recipe @relation(fields: [recipeId], references: [id])
-  userId   String
-  user     User   @relation(fields: [userId], references: [id])
+model User {
+  id              String                 @id @default(uuid())
+  email           String                 @unique @db.VarChar(255)
+  firstName       String?                @db.VarChar(255)
+  lastName        String?                @db.VarChar(255)
+  createdAt       DateTime               @default(now())
+  updatedAt       DateTime               @updatedAt
+  recipes         Recipe[]
+  favoriteRecipes UsersFavoriteRecipes[]
+  recipeReads     RecipeRead[]
+  mealNotes       Note[]
+  role            Role                   @default(MEMBER)
+}
+
+model RecipeRead {
+  recipeId  Int
+  recipe    Recipe   @relation(fields: [recipeId], references: [id])
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
+
+  @@id([recipeId, userId])
+}
+
+model UsersFavoriteRecipes {
+  recipeId  Int
+  recipe    Recipe   @relation(fields: [recipeId], references: [id])
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
 
   @@id([recipeId, userId])
 }
 
 model Recipe {
-  id             Int                  @id @default(autoincrement())
-  title          String
-  authorId       String
-  author         User                 @relation(fields: [authorId], references: [id], onDelete: Cascade)
-  createdAt      DateTime             @default(now())
-  updatedAt      DateTime             @updatedAt
-  instructions   String
-  ingredients    Ingredient[]
-  servings       String?
-  mealTypes      MealType[]
-  favoritedUsers FavoritesOnRecipes[]
-  notes          Note[]
+  id               Int                    @id @default(autoincrement())
+  title            String
+  authorId         String
+  author           User                   @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  createdAt        DateTime               @default(now())
+  updatedAt        DateTime               @updatedAt
+  instructions     String                 @db.Text
+  ingredients      Ingredient[]
+  servings         String?
+  mealTypes        MealType[]
+  favoritedUsers   UsersFavoriteRecipes[]
+  recentlyViewedBy RecipeRead[]
+  notes            Note[]
+
+  @@index([authorId])
 }
 
 model Note {
   id        Int      @id @default(autoincrement())
+  content   String   @db.Text
   authorId  String
   author    User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
@@ -55,6 +76,7 @@ model Note {
   recipeId  Int
   recipe    Recipe   @relation(fields: [recipeId], references: [id], onDelete: Cascade)
 
+  @@index([recipeId, authorId])
 }
 
 model MealType {
@@ -75,5 +97,5 @@ model Ingredient {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-
+  @@index([recipeId])
 }

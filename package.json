@@ -32,5 +32,8 @@
     "postinstall": "remix setup node",
     "build": "cross-env NODE_ENV=production remix build",
     "dev": "cross-env NODE_ENV=development remix dev"
+  },
+  "prisma": {
+    "seed": "ts-node prisma/seed.ts"
   }
 }
