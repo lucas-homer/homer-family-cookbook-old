@@ -1,5 +1,6 @@
 node_modules
 
+.vscode
 .cache
 .vercel
 .output
@@ -8,3 +9,6 @@ node_modules
 /build/
 /public/build
 /api/index.js
+
+# https://remix.run/docs/en/v1/guides/styling#tailwind-css
+/app/tailwind.css
