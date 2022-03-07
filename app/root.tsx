@@ -69,7 +69,7 @@ export default function App() {
             <div className="flex">
               <p>{`Welcome ${data.user?.firstName || ""}`}</p>
               <Form action="/logout" method="post">
-                <button>Logout</button>
+                <button className="text-3xl">Logout</button>
               </Form>
             </div>
           ) : (
