@@ -66,10 +66,10 @@ export default function App() {
           </h1>
 
           {data.user ? (
-            <div className="flex">
+            <div className="flex gap-4">
               <p>{`Welcome ${data.user?.firstName || ""}`}</p>
               <Form action="/logout" method="post">
-                <button className="text-3xl">Logout</button>
+                <button>Logout</button>
               </Form>
             </div>
           ) : (
