@@ -37,7 +37,8 @@
     "build:remix": "cross-env NODE_ENV=production remix build",
     "dev": "run-p dev:*",
     "dev:css": "npm run generate:css -- --watch",
-    "dev:remix": "cross-env NODE_ENV=development remix dev",
+    "dev:remix": "cross-env NODE_ENV=development remix watch",
+    "dev:vercel": "cross-env NODE_ENV=development vercel dev",
     "generate:css": "npx tailwindcss -o ./app/tailwind.css",
     "start": "cross-env NODE_ENV=production remix-serve build"
   },
