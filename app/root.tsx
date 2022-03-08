@@ -14,13 +14,13 @@ import {
 import type { MetaFunction } from "remix";
 import { User } from "@prisma/client";
 import { getSession, getUser } from "~/utils/auth.server";
-import styles from "./tailwind.css";
+// import styles from "./tailwind.css";
 
 export const meta: MetaFunction = () => {
   return { title: "New Remix App" };
 };
 
-export const links: LinksFunction = () => [{ rel: "stylesheet", href: styles }];
+// export const links: LinksFunction = () => [{ rel: "stylesheet", href: styles }];
 
 type LoaderData = {
   user: User | null;
