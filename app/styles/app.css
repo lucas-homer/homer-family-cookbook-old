@@ -483,3 +483,8 @@ Ensure the default browser behavior of the `hidden` attribute.
 .gap-4 {
   gap: 1rem;
 }
+
+.text-3xl {
+  font-size: 1.875rem;
+  line-height: 2.25rem;
+}
