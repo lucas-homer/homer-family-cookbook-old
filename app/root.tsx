@@ -55,7 +55,7 @@ export default function App() {
       </head>
       <body>
         <header className="flex flex-nowrap justify-between">
-          <h1>
+          <h1 className="text-3xl">
             <Link
               to="/"
               title="Homer Family Cookbook"
