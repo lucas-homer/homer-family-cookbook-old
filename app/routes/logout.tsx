@@ -1,10 +1,10 @@
 import type { ActionFunction } from "remix";
 import { redirect } from "remix";
-import { destroySession, getSession } from "~/utils/auth.server";
+import { destroySession, getSession } from "~/utils/cookies.server";
 import {
   AUTH0_CLIENT_ID,
   AUTH0_LOGOUT_URL,
-  AUTH0_RETURN_TO_URL
+  AUTH0_RETURN_TO_URL,
 } from "~/constants/index.server";
 
 export const action: ActionFunction = async ({ request }) => {
@@ -16,7 +16,7 @@ export const action: ActionFunction = async ({ request }) => {
 
   return redirect(logoutURL.toString(), {
     headers: {
-      "Set-Cookie": await destroySession(session)
-    }
+      "Set-Cookie": await destroySession(session),
+    },
   });
 };

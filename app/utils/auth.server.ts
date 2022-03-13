@@ -1,8 +1,12 @@
 import { Authenticator } from "remix-auth";
 import { Auth0Strategy } from "remix-auth-auth0";
-import { createCookieSessionStorage, redirect } from "remix";
+import { redirect } from "remix";
+import {
+  sessionStorage,
+  getSession,
+  destroySession,
+} from "~/utils/cookies.server";
 import { db } from "~/utils/db.server";
-import type { Auth0Profile } from "remix-auth-auth0";
 import type { User } from "@prisma/client";
 
 import {
@@ -10,31 +14,9 @@ import {
   AUTH0_CLIENT_ID,
   AUTH0_CLIENT_SECRET,
   AUTH0_DOMAIN,
-  SECRETS,
 } from "~/constants/index.server";
 
-if (!SECRETS) {
-  throw new Error("SECRETS must be set");
-}
-
-const sessionStorage = createCookieSessionStorage({
-  cookie: {
-    name: "_remix_session",
-    sameSite: "lax",
-    path: "/",
-    httpOnly: true,
-    maxAge: 60 * 60 * 24 * 30,
-    secrets: [SECRETS],
-    // normally you want this to be `secure: true`
-    // but that doesn't work on localhost for Safari
-    // https://web.dev/when-to-use-local-https/
-    secure: process.env.NODE_ENV === "production",
-  },
-});
-
-export const auth = new Authenticator<Auth0Profile & { userId: User["id"] }>(
-  sessionStorage
-);
+export const auth = new Authenticator<User>(sessionStorage);
 
 const auth0Strategy = new Auth0Strategy(
   {
@@ -45,31 +27,31 @@ const auth0Strategy = new Auth0Strategy(
   },
   async ({ profile }) => {
     const email = profile.emails[0].value;
-    const userExists = await db.user.findUnique({
+    const user = await db.user.findUnique({
       where: { email },
     });
 
-    if (!userExists) {
-      const newUser = await db.user.create({
+    if (!user) {
+      return db.user.create({
         data: {
           email,
         },
       });
-
-      return { ...profile, userId: newUser.id };
     }
 
-    return { ...profile, userId: userExists.id };
+    return user;
   }
 );
 
 auth.use(auth0Strategy);
 
-export const { getSession, commitSession, destroySession } = sessionStorage;
+export function getUserSession(request: Request) {
+  return sessionStorage.getSession(request.headers.get("Cookie"));
+}
 
 export async function getUserId(request: Request) {
-  const profile = await auth.isAuthenticated(request);
-  const userId = profile?.userId;
+  const session = await getUserSession(request);
+  const userId = await session.get("userId");
   if (!userId || typeof userId !== "string") return null;
   return userId;
 }
@@ -92,7 +74,7 @@ export async function getUser(request: Request) {
 
 export async function logout(request: Request) {
   const session = await getSession(request.headers.get("Cookie"));
-  return redirect("/auth0", {
+  return redirect("/login", {
     headers: {
       "Set-Cookie": await destroySession(session),
     },

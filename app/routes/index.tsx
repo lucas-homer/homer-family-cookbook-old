@@ -1,6 +1,7 @@
 import type { LoaderFunction } from "remix";
 import { json, useLoaderData } from "remix";
-import { auth, getSession } from "~/utils/auth.server";
+import { auth } from "~/utils/auth.server";
+import { getSession } from "~/utils/cookies.server";
 
 type LoaderData = {
   error: { message: string } | null;

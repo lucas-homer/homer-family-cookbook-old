@@ -12,8 +12,9 @@ import {
   useLoaderData,
 } from "remix";
 import type { MetaFunction } from "remix";
-import { User } from "@prisma/client";
-import { getSession, getUser } from "~/utils/auth.server";
+import type { User } from "@prisma/client";
+
+import { auth, getUser } from "~/utils/auth.server";
 import styles from "./styles/app.css";
 
 export const meta: MetaFunction = () => {
@@ -27,15 +28,7 @@ type LoaderData = {
 };
 
 export const loader: LoaderFunction = async ({ request }) => {
-  const session = await getSession(request.headers.get("Cookie"));
-
-  if (!session) {
-    return {
-      user: null,
-    } as LoaderData;
-  }
-
-  const user = await getUser(request);
+  const user = await auth.isAuthenticated(request);
 
   return {
     user,
@@ -73,7 +66,7 @@ export default function App() {
               </Form>
             </div>
           ) : (
-            <Form action="/auth0" method="post">
+            <Form action="/login" method="post">
               <button>Login</button>
             </Form>
           )}
