@@ -1,26 +1,22 @@
-import type { MealType, Recipe } from "@prisma/client";
+import type { MealType } from "@prisma/client";
 import { Link, LoaderFunction, useLoaderData } from "remix";
-
-type LoaderData = { mealType: MealType & { recipes: Recipe[] } };
+import { getMealTypeWithRecipes, MealTypeWithRecipes } from "~/models/mealType";
 
 export const loader: LoaderFunction = async ({ params }) => {
-  const mealTypeWithRecipes = await db.mealType.findUnique({
-    where: { id: Number(params.mealTypeId) },
-    include: { recipes: true },
-  });
+  const mealTypeWithRecipes = await getMealTypeWithRecipes(
+    Number(params.mealTypeId)
+  );
   if (!mealTypeWithRecipes) {
     throw new Response("What a joke! Not found.", {
       status: 404,
     });
   }
-  const data: LoaderData = {
-    mealType: mealTypeWithRecipes,
-  };
-  return data;
+
+  return mealTypeWithRecipes;
 };
 
 export default function MealType() {
-  const data = useLoaderData<LoaderData>();
+  const data = useLoaderData<MealTypeWithRecipes>();
   return (
     <div>
       <h1 className="text-4xl mb-8">{data.mealType.name}</h1>
