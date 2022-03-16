@@ -1,26 +1,29 @@
-import type { LoaderFunction } from "remix";
-import { json, useLoaderData } from "remix";
-import { auth } from "~/utils/auth.server";
-import { getSession } from "~/utils/cookies.server";
+import { MealType, User } from "@prisma/client";
+import { json, Link, LoaderFunction } from "remix";
+import { useLoaderData } from "remix";
+import { getMealTypes } from "~/models/mealType";
 
-type LoaderData = {
-  error: { message: string } | null;
-};
-
-export const loader: LoaderFunction = async ({ request }) => {
-  const session = await getSession(request.headers.get("Cookie"));
-  const error = session.get(auth.sessionErrorKey) as LoaderData["error"];
-  return json<LoaderData>({ error });
+export const loader: LoaderFunction = async () => {
+  const mealTypes = await getMealTypes();
+  return json<MealType[]>(mealTypes);
 };
 
 export default function Index() {
-  const { error } = useLoaderData<LoaderData>();
-
+  const mealTypes = useLoaderData<MealType[]>();
   return (
-    <>
-      {error ? <div>{error.message}</div> : null}
-
-      <div>index page</div>
-    </>
+    <main>
+      <section>
+        <h2 className="text-4xl mb-8">Meal Types</h2>
+        <ul className="pl-8">
+          {mealTypes.map((item) => (
+            <li key={item.id} className="text-xl mb-4">
+              <Link prefetch="intent" to={item.name}>
+                {item.name}
+              </Link>
+            </li>
+          ))}
+        </ul>
+      </section>
+    </main>
   );
 }

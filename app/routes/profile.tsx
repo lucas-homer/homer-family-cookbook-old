@@ -1,14 +1,14 @@
 import type { User } from "@prisma/client";
 import type { LoaderFunction } from "remix";
 import { json, useLoaderData } from "remix";
-import { auth } from "~/utils/auth.server";
+import { requireUserId } from "~/utils/auth.server";
+import { getUserById } from "~/models/user.server";
 
 type LoaderData = { user: User | null };
 
 export const loader: LoaderFunction = async ({ request }) => {
-  const user = await auth.isAuthenticated(request, {
-    failureRedirect: "/login?returnTo=/profile",
-  });
+  const userId = await requireUserId(request, "/profile");
+  const user = await getUserById(userId);
 
   return json<LoaderData>({ user });
 };

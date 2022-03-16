@@ -14,7 +14,7 @@ import {
 import type { MetaFunction } from "remix";
 import type { User } from "@prisma/client";
 
-import { auth, getUser } from "~/utils/auth.server";
+import { getUser } from "./models/user.server";
 import styles from "./styles/app.css";
 
 export const meta: MetaFunction = () => {
@@ -28,7 +28,7 @@ type LoaderData = {
 };
 
 export const loader: LoaderFunction = async ({ request }) => {
-  const user = await auth.isAuthenticated(request);
+  const user = await getUser(request);
 
   return {
     user,

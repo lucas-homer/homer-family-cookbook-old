@@ -1,12 +1,12 @@
 import { Authenticator } from "remix-auth";
-import { Auth0Strategy } from "remix-auth-auth0";
+import { Auth0Profile, Auth0Strategy } from "remix-auth-auth0";
 import { redirect } from "remix";
 import {
   sessionStorage,
   getSession,
   destroySession,
 } from "~/utils/cookies.server";
-import { db } from "~/utils/db.server";
+import { db } from "~/models/db.server";
 import type { User } from "@prisma/client";
 
 import {
@@ -15,8 +15,10 @@ import {
   AUTH0_CLIENT_SECRET,
   AUTH0_DOMAIN,
 } from "~/constants/index.server";
+import { getUserId } from "../models/user.server";
 
-export const auth = new Authenticator<User>(sessionStorage);
+export type AppAuth = Auth0Profile & { userId: User["id"] };
+export const auth = new Authenticator<AppAuth>(sessionStorage);
 
 const auth0Strategy = new Auth0Strategy(
   {
@@ -32,45 +34,24 @@ const auth0Strategy = new Auth0Strategy(
     });
 
     if (!user) {
-      return db.user.create({
+      const newUser = await db.user.create({
         data: {
           email,
         },
       });
+      return {
+        ...profile,
+        userId: newUser.id,
+      };
     }
-
-    return user;
+    return {
+      ...profile,
+      userId: user.id,
+    };
   }
 );
 
 auth.use(auth0Strategy);
-
-export function getUserSession(request: Request) {
-  return sessionStorage.getSession(request.headers.get("Cookie"));
-}
-
-export async function getUserId(request: Request) {
-  const session = await getUserSession(request);
-  const userId = await session.get("userId");
-  if (!userId || typeof userId !== "string") return null;
-  return userId;
-}
-
-export async function getUser(request: Request) {
-  const userId = await getUserId(request);
-  if (typeof userId !== "string") {
-    return null;
-  }
-
-  try {
-    const user = await db.user.findUnique({
-      where: { id: userId },
-    });
-    return user;
-  } catch {
-    throw logout(request);
-  }
-}
 
 export async function logout(request: Request) {
   const session = await getSession(request.headers.get("Cookie"));
@@ -79,4 +60,16 @@ export async function logout(request: Request) {
       "Set-Cookie": await destroySession(session),
     },
   });
+}
+
+export async function requireUserId(
+  request: Request,
+  returnTo: string = new URL(request.url).pathname
+) {
+  const userId = await getUserId(request);
+  if (!userId || typeof userId !== "string") {
+    const searchParams = new URLSearchParams([["returnTo", returnTo]]);
+    throw redirect(`/login?${searchParams}`);
+  }
+  return userId;
 }
