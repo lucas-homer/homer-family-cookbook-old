@@ -12,8 +12,9 @@ import {
   useLoaderData,
 } from "remix";
 import type { MetaFunction } from "remix";
-import { User } from "@prisma/client";
-import { getSession, getUser } from "~/utils/auth.server";
+import type { User } from "@prisma/client";
+
+import { getUser } from "./models/user.server";
 import styles from "./styles/app.css";
 
 export const meta: MetaFunction = () => {
@@ -27,14 +28,6 @@ type LoaderData = {
 };
 
 export const loader: LoaderFunction = async ({ request }) => {
-  const session = await getSession(request.headers.get("Cookie"));
-
-  if (!session) {
-    return {
-      user: null,
-    } as LoaderData;
-  }
-
   const user = await getUser(request);
 
   return {
@@ -55,7 +48,7 @@ export default function App() {
       </head>
       <body>
         <header className="flex flex-nowrap justify-between">
-          <h1>
+          <h1 className="text-3xl">
             <Link
               to="/"
               title="Homer Family Cookbook"
@@ -73,7 +66,7 @@ export default function App() {
               </Form>
             </div>
           ) : (
-            <Form action="/auth0" method="post">
+            <Form action="/login" method="post">
               <button>Login</button>
             </Form>
           )}

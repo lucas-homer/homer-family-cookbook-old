@@ -1,8 +1,12 @@
 import { Authenticator } from "remix-auth";
-import { Auth0Strategy } from "remix-auth-auth0";
-import { createCookieSessionStorage, redirect } from "remix";
-import { db } from "~/utils/db.server";
-import type { Auth0Profile } from "remix-auth-auth0";
+import { Auth0Profile, Auth0Strategy } from "remix-auth-auth0";
+import { redirect } from "remix";
+import {
+  sessionStorage,
+  getSession,
+  destroySession,
+} from "~/utils/cookies.server";
+import { db } from "~/models/db.server";
 import type { User } from "@prisma/client";
 
 import {
@@ -10,31 +14,11 @@ import {
   AUTH0_CLIENT_ID,
   AUTH0_CLIENT_SECRET,
   AUTH0_DOMAIN,
-  SECRETS,
 } from "~/constants/index.server";
+import { getUserId } from "../models/user.server";
 
-if (!SECRETS) {
-  throw new Error("SECRETS must be set");
-}
-
-const sessionStorage = createCookieSessionStorage({
-  cookie: {
-    name: "_remix_session",
-    sameSite: "lax",
-    path: "/",
-    httpOnly: true,
-    maxAge: 60 * 60 * 24 * 30,
-    secrets: [SECRETS],
-    // normally you want this to be `secure: true`
-    // but that doesn't work on localhost for Safari
-    // https://web.dev/when-to-use-local-https/
-    secure: process.env.NODE_ENV === "production",
-  },
-});
-
-export const auth = new Authenticator<Auth0Profile & { userId: User["id"] }>(
-  sessionStorage
-);
+export type AppAuth = Auth0Profile & { userId: User["id"] };
+export const auth = new Authenticator<AppAuth>(sessionStorage);
 
 const auth0Strategy = new Auth0Strategy(
   {
@@ -45,56 +29,47 @@ const auth0Strategy = new Auth0Strategy(
   },
   async ({ profile }) => {
     const email = profile.emails[0].value;
-    const userExists = await db.user.findUnique({
+    const user = await db.user.findUnique({
       where: { email },
     });
 
-    if (!userExists) {
+    if (!user) {
       const newUser = await db.user.create({
         data: {
           email,
         },
       });
-
-      return { ...profile, userId: newUser.id };
+      return {
+        ...profile,
+        userId: newUser.id,
+      };
     }
-
-    return { ...profile, userId: userExists.id };
+    return {
+      ...profile,
+      userId: user.id,
+    };
   }
 );
 
 auth.use(auth0Strategy);
 
-export const { getSession, commitSession, destroySession } = sessionStorage;
-
-export async function getUserId(request: Request) {
-  const profile = await auth.isAuthenticated(request);
-  const userId = profile?.userId;
-  if (!userId || typeof userId !== "string") return null;
-  return userId;
-}
-
-export async function getUser(request: Request) {
-  const userId = await getUserId(request);
-  if (typeof userId !== "string") {
-    return null;
-  }
-
-  try {
-    const user = await db.user.findUnique({
-      where: { id: userId },
-    });
-    return user;
-  } catch {
-    throw logout(request);
-  }
-}
-
 export async function logout(request: Request) {
   const session = await getSession(request.headers.get("Cookie"));
-  return redirect("/auth0", {
+  return redirect("/login", {
     headers: {
       "Set-Cookie": await destroySession(session),
     },
   });
+}
+
+export async function requireUserId(
+  request: Request,
+  returnTo: string = new URL(request.url).pathname
+) {
+  const userId = await getUserId(request);
+  if (!userId || typeof userId !== "string") {
+    const searchParams = new URLSearchParams([["returnTo", returnTo]]);
+    throw redirect(`/login?${searchParams}`);
+  }
+  return userId;
 }
