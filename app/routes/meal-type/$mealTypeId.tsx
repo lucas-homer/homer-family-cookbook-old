@@ -6,6 +6,7 @@ export const loader: LoaderFunction = async ({ params }) => {
   const mealTypeWithRecipes = await getMealTypeWithRecipes(
     Number(params.mealTypeId)
   );
+
   if (!mealTypeWithRecipes) {
     throw new Response("What a joke! Not found.", {
       status: 404,
@@ -16,12 +17,12 @@ export const loader: LoaderFunction = async ({ params }) => {
 };
 
 export default function MealType() {
-  const data = useLoaderData<MealTypeWithRecipes>();
+  const mealType = useLoaderData<MealTypeWithRecipes>();
   return (
     <div>
-      <h1 className="text-4xl mb-8">{data.mealType.name}</h1>
+      <h1 className="text-4xl mb-8">{mealType.name}</h1>
       <ul className="pl-8">
-        {data.mealType.recipes.map((recipe) => (
+        {mealType.recipes?.map((recipe) => (
           <li key={recipe.id} className="text-xl mb-4">
             <Link prefetch="intent" to={`/recipe/${recipe.id}`}>
               {recipe.title}
