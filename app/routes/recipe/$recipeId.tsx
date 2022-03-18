@@ -5,6 +5,7 @@ import {
   unfavoriteRecipe,
   getRecipe,
   GetRecipeResponse,
+  recordRecipeView,
 } from "~/models/recipe.server";
 import { getUserId } from "~/models/user.server";
 import { requireUserId } from "~/utils/auth.server";
@@ -14,12 +15,20 @@ type LoaderData = {
   userId: User["id"] | null;
 };
 export const loader: LoaderFunction = async ({ params, request }) => {
-  const recipeData = await getRecipe(Number(params.recipeId));
   const userId = await getUserId(request);
+  const recipeId = Number(params.recipeId);
+  const recipeData = await getRecipe(recipeId);
 
   if (!recipeData) {
     throw new Response("What a joke! Not found.", {
       status: 404,
+    });
+  }
+
+  if (userId) {
+    await recordRecipeView({
+      userId,
+      recipeId,
     });
   }
 

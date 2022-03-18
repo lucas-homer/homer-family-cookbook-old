@@ -57,3 +57,26 @@ export async function unfavoriteRecipe({
     },
   });
 }
+
+// TODO -- maybe implement some sort of cleanup for 'expired' records
+export async function recordRecipeView({
+  recipeId,
+  userId,
+}: {
+  recipeId: Recipe["id"];
+  userId: User["id"];
+}) {
+  return db.recipeRead.upsert({
+    where: {
+      recipeId_userId: {
+        recipeId,
+        userId,
+      },
+    },
+    update: {},
+    create: {
+      recipeId,
+      userId,
+    },
+  });
+}
