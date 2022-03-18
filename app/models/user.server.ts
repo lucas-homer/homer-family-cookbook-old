@@ -16,14 +16,34 @@ export async function getUser(request: Request) {
     return null;
   }
 
-  try {
-    const user = await db.user.findUnique({
-      where: { id: userId },
-    });
-    return user;
-  } catch {
-    throw logout(request);
+  return db.user.findUnique({
+    where: { id: userId },
+  });
+}
+
+export async function getUserProfile(request: Request) {
+  const userId = await getUserId(request);
+
+  if (!userId || typeof userId !== "string") {
+    return null;
   }
+
+  return db.user.findUnique({
+    where: { id: userId },
+    include: {
+      recipes: true,
+      favoriteRecipes: {
+        include: {
+          recipe: true,
+        },
+      },
+      recipeReads: {
+        include: {
+          recipe: true,
+        },
+      },
+    },
+  });
 }
 
 export async function getUserById(userId: User["id"]): Promise<User | null> {
