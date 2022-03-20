@@ -34,6 +34,7 @@ model RecipeRead {
   userId    String
   user      User     @relation(fields: [userId], references: [id])
   createdAt DateTime @default(now())
+  updatedAt DateTime @default(now())
 
   @@id([recipeId, userId])
 }

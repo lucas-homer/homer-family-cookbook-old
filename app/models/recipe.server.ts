@@ -76,7 +76,9 @@ export async function recordRecipeView({
         userId,
       },
     },
-    update: {},
+    update: {
+      updatedAt: new Date(),
+    },
     create: {
       recipeId,
       userId,
