@@ -1,5 +1,6 @@
 import type { User } from "@prisma/client";
 import { auth } from "../utils/auth.server";
+import { db } from "~/models/db.server";
 
 export async function getUserId(request: Request) {
   const authProfile = await auth.isAuthenticated(request);
