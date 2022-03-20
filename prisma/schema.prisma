@@ -91,7 +91,7 @@ model MealType {
 
 model Ingredient {
   id          Int      @id @default(autoincrement())
-  description String
+  name String
   quantity    Int?
   recipeId    Int
   recipe      Recipe   @relation(fields: [recipeId], references: [id], onDelete: Cascade)
