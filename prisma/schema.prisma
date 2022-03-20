@@ -34,6 +34,7 @@ model RecipeRead {
   userId    String
   user      User     @relation(fields: [userId], references: [id])
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@id([recipeId, userId])
 }
@@ -89,13 +90,13 @@ model MealType {
 }
 
 model Ingredient {
-  id          Int      @id @default(autoincrement())
-  description String
-  quantity    Int?
-  recipeId    Int
-  recipe      Recipe   @relation(fields: [recipeId], references: [id], onDelete: Cascade)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id        Int      @id @default(autoincrement())
+  name      String
+  quantity  Int?
+  recipeId  Int
+  recipe    Recipe   @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([recipeId])
 }

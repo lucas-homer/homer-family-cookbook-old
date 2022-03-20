@@ -1,5 +1,5 @@
 import type { User } from "@prisma/client";
-import { auth, logout } from "../utils/auth.server";
+import { auth } from "../utils/auth.server";
 
 export async function getUserId(request: Request) {
   const authProfile = await auth.isAuthenticated(request);
@@ -42,6 +42,22 @@ export async function getUserProfile(request: Request) {
           recipe: true,
         },
       },
+    },
+  });
+}
+
+export async function getRecentlyViewed(userId: User["id"]) {
+  return db.recipeRead.findMany({
+    where: {
+      userId,
+    },
+    orderBy: [
+      {
+        updatedAt: "desc",
+      },
+    ],
+    include: {
+      recipe: true,
     },
   });
 }

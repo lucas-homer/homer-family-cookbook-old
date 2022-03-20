@@ -75,11 +75,11 @@ async function seed() {
         createMany: {
           data: [
             {
-              description: "eggs, whisked",
+              name: "eggs, whisked",
               quantity: 2,
             },
             {
-              description: "eighth cup shredded cheese",
+              name: "eighth cup shredded cheese",
               quantity: 1,
             },
           ],
@@ -106,19 +106,19 @@ async function seed() {
         createMany: {
           data: [
             {
-              description: "pound dry pinto or black beans",
+              name: "pound dry pinto or black beans",
               quantity: 1,
             },
             {
-              description: "cloves garlic, minced",
+              name: "cloves garlic, minced",
               quantity: 3,
             },
             {
-              description: "chipotle pepper in adobo, minced",
+              name: "chipotle pepper in adobo, minced",
               quantity: 1,
             },
             {
-              description: "tablespoon Better Than Bouillon paste",
+              name: "tablespoon Better Than Bouillon paste",
               quantity: 1,
             },
           ],
