@@ -52,12 +52,3 @@ export async function updateNote({
     },
   });
 }
-
-export type MealTypeWithRecipes = MealType & { recipes: Recipe[] };
-
-export async function getMealTypeWithRecipes(id: MealType["id"]) {
-  return db.mealType.findUnique({
-    where: { id },
-    include: { recipes: true },
-  });
-}
