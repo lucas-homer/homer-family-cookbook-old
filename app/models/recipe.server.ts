@@ -8,7 +8,8 @@ import {
 } from "@prisma/client";
 import { db } from "~/models/db.server";
 
-export type GetRecipeResponse = Recipe & {
+export type GetRecipeResponse = {
+  recipe: Recipe;
   mealTypes: MealType[];
   ingredients: Ingredient[];
   notes: Note[];

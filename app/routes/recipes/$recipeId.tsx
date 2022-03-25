@@ -3,7 +3,6 @@ import { useEffect, useRef, useState } from "react";
 import {
   ActionFunction,
   Form,
-  Link,
   LoaderFunction,
   Outlet,
   redirect,
@@ -153,7 +152,7 @@ export const action: ActionFunction = async ({ request, params }) => {
       });
     }
     case actionIds.favorite: {
-      const response = await favoriteRecipe({
+      await favoriteRecipe({
         userId,
         recipeId,
       });
@@ -213,7 +212,7 @@ export default function Recipe() {
   return (
     <div>
       <div className="mb-8">
-        <h1 className="text-4xl mb-8">{recipeData.title}</h1>
+        <h1 className="text-4xl mb-8">{recipeData.recipe.title}</h1>
         <Form method="post">
           <input
             type="hidden"
@@ -234,7 +233,7 @@ export default function Recipe() {
         ))}
       </ul>
       <h3 className="text-2xl">Instructions</h3>
-      <p>{recipeData.instructions}</p>
+      <p>{recipeData.recipe.instructions}</p>
       <br />
       <div>
         <Outlet />
