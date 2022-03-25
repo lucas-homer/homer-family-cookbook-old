@@ -8,11 +8,9 @@ import {
 } from "@prisma/client";
 import { db } from "~/models/db.server";
 
-export type GetRecipeResponse = {
-  recipe: Recipe;
+export type GetRecipeResponse = Recipe & {
   mealTypes: MealType[];
   ingredients: Ingredient[];
-  notes: Note[];
   user: User;
   favoritedUsers: UsersFavoriteRecipes[];
 };
@@ -23,7 +21,6 @@ export async function getRecipe(recipeId: Recipe["id"]) {
     include: {
       mealTypes: true,
       ingredients: true,
-      notes: true,
       author: true,
       favoritedUsers: true,
     },

@@ -24,7 +24,7 @@ export default function MealType() {
       <ul className="pl-8">
         {mealType.recipes?.map((recipe) => (
           <li key={recipe.id} className="text-xl mb-4">
-            <Link prefetch="intent" to={`/recipe/${recipe.id}`}>
+            <Link prefetch="intent" to={`/recipes/${recipe.id}`}>
               {recipe.title}
             </Link>
           </li>

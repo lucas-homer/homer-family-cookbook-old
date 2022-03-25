@@ -73,3 +73,9 @@ export async function requireUserId(
   }
   return userId;
 }
+
+export async function redirectToLogin(request: Request) {
+  const returnTo = new URL(request.url).pathname;
+  const searchParams = new URLSearchParams([["returnTo", returnTo]]);
+  throw redirect(`/login?${searchParams}`);
+}
