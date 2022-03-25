@@ -146,16 +146,19 @@ export const action: ActionFunction = async ({ request, params }) => {
       return redirect(`recipes/${recipeId}`);
     }
     case actionIds.unfavorite: {
+      console.log("UNFAVORITE CASE");
       await unfavoriteRecipe({
         userId,
         recipeId,
       });
+      return null;
     }
     case actionIds.favorite: {
       await favoriteRecipe({
         userId,
         recipeId,
       });
+      return null;
     }
     default: {
       throw new Error(`Invalid actionId: ${actionId}`);
@@ -214,14 +217,15 @@ export default function Recipe() {
       <div className="mb-8">
         <h1 className="text-4xl mb-8">{recipeData.title}</h1>
         <Form method="post">
-          <input
-            type="hidden"
+          <button
+            type="submit"
             name="actionId"
             value={
               isRecipeFavorited ? actionIds.unfavorite : actionIds.favorite
             }
-          />
-          <button type="submit">{favoriteButtonText}</button>
+          >
+            {favoriteButtonText}
+          </button>
         </Form>
       </div>
       <ul className="pl-8">
