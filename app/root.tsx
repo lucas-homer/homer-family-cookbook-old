@@ -47,14 +47,14 @@ export default function App() {
         <Links />
       </head>
       <body>
-        <header className="flex flex-nowrap justify-between">
+        <header className="flex flex-nowrap justify-between items-center p-2">
           <h1 className="text-3xl">
             <Link
               to="/"
               title="Homer Family Cookbook"
               aria-label="Homer Family Cookbook"
             >
-              Home
+              HFC
             </Link>
           </h1>
 
