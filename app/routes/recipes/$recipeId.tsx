@@ -4,14 +4,14 @@ import {
   ActionFunction,
   Form,
   LoaderFunction,
-  Outlet,
   redirect,
   useActionData,
+  useFetcher,
   useLoaderData,
-  useTransition,
 } from "remix";
 import {
   createNote,
+  deleteNote,
   getNotesByRecipeId,
   updateNote,
 } from "~/models/note.server";
@@ -68,11 +68,12 @@ type ActionData = {
   };
 };
 
-const actionIds = {
+export const actionIds = {
   favorite: "favorite",
   unfavorite: "unfavorite",
   addNote: "addNote",
   updateNote: "updateNote",
+  deleteNote: "deleteNote",
   login: "login",
 };
 
@@ -93,6 +94,17 @@ export const action: ActionFunction = async ({ request, params }) => {
     case actionIds.login: {
       requireUserId(request);
     }
+    case actionIds.deleteNote: {
+      const noteId = form.get("noteId");
+
+      if (typeof noteId !== "string") {
+        return badRequest({
+          formError: `Form not submitted correctly.`,
+        });
+      }
+
+      return deleteNote(parseInt(noteId));
+    }
     case actionIds.updateNote: {
       const noteId = form.get("noteId");
       const content = form.get("content");
@@ -112,12 +124,10 @@ export const action: ActionFunction = async ({ request, params }) => {
         return badRequest({ fieldErrors, fields });
       }
 
-      await updateNote({
+      return updateNote({
         noteId: Number(noteId),
         content,
       });
-
-      return redirect(`recipes/${recipeId}`);
     }
     case actionIds.addNote: {
       const content = form.get("content");
@@ -169,86 +179,77 @@ export const action: ActionFunction = async ({ request, params }) => {
 export default function Recipe() {
   const { notes, recipeData, userId } = useLoaderData<LoaderData>();
 
-  const [editNoteFormData, setEditNoteForm] = useState<Note | null>(null);
-  const editNoteFormRef = useRef<HTMLFormElement>(null);
-  const editNoteContentRef = useRef<HTMLTextAreaElement>(null);
   const createNoteFormRef = useRef<HTMLFormElement>(null);
   const createNoteContentRef = useRef<HTMLTextAreaElement>(null);
 
-  const transition = useTransition();
-  const actionId = transition.submission?.formData.get("actionId");
+  const fetcher = useFetcher();
+  const actionId = fetcher.submission?.formData.get("actionId");
   const isCreatingNote = actionId === actionIds.addNote;
-  const isEditingNote = actionId === actionIds.updateNote;
+  const isUpdatingFavorite =
+    actionId === actionIds.favorite || actionId === actionIds.unfavorite;
 
   // after saving new note, reset and focus back into the new note input
   useEffect(() => {
-    if (transition.state === "loading" && isCreatingNote) {
+    if (!isCreatingNote && fetcher.type !== "init") {
       createNoteContentRef.current?.focus();
       createNoteFormRef.current?.reset();
     }
-  }, [isCreatingNote, transition.state]);
-
-  // after saving note update, reset and change out of edit mode
-  useEffect(() => {
-    if (transition.state === "loading" && isEditingNote) {
-      editNoteFormRef.current && editNoteFormRef.current.reset();
-      setEditNoteForm(null);
-    }
-  }, [transition.state, isEditingNote]);
-
-  // focus the input after opening edit form
-  useEffect(() => {
-    if (transition.state === "idle" && editNoteFormData) {
-      editNoteContentRef.current?.focus();
-    }
-  }, [transition.state, editNoteFormData]);
+  }, [isCreatingNote, fetcher.type]);
 
   const actionData = useActionData<ActionData>();
-
   const isRecipeFavorited = recipeData.favoritedUsers.some(
     (item) => item.userId === userId
   );
-  const favoriteButtonText = isRecipeFavorited
+  const favoriteButtonText = isUpdatingFavorite
+    ? "Saving..."
+    : isRecipeFavorited
     ? "REMOVE FROM FAVORITES"
     : "FAVORITE THIS RECIPE";
 
   return (
-    <div>
-      <div className="mb-8">
-        <h1 className="text-4xl mb-8">{recipeData.title}</h1>
-        <Form method="post">
-          <button
-            type="submit"
-            name="actionId"
-            value={
-              isRecipeFavorited ? actionIds.unfavorite : actionIds.favorite
-            }
-          >
-            {favoriteButtonText}
-          </button>
-        </Form>
-      </div>
-      <ul className="pl-8">
-        <h3>Ingredients</h3>
-        {recipeData.ingredients?.map((ingredient) => (
-          <li key={ingredient.id} className="text-xl mb-4">
-            <p>{`${ingredient.quantity} ${ingredient.name}`}</p>
-          </li>
-        ))}
-      </ul>
-      <h3 className="text-2xl">Instructions</h3>
-      <p>{recipeData.instructions}</p>
-      <br />
-      <div>
-        <Outlet />
-        <h3 className="text-2xl">Notes</h3>
+    <div className="p-8">
+      {/* ****RECIPE*** */}
+      <section className="">
+        <div className="mb-8">
+          <h1 className="text-4xl mb-2">{recipeData.title}</h1>
+          <fetcher.Form method="post">
+            <button
+              disabled={isUpdatingFavorite}
+              type="submit"
+              name="actionId"
+              value={
+                isRecipeFavorited ? actionIds.unfavorite : actionIds.favorite
+              }
+            >
+              {favoriteButtonText}
+            </button>
+          </fetcher.Form>
+        </div>
+        <ul>
+          <h3 className="text-2xl mb-2">Ingredients</h3>
+          {recipeData.ingredients?.map((ingredient) => (
+            <li key={ingredient.id} className="text-lg mb-3">
+              <p>{`-- ${ingredient.quantity} ${ingredient.name}`}</p>
+            </li>
+          ))}
+        </ul>
+        <br />
+        <h3 className="text-2xl mb-2">Instructions</h3>
+        <p>{recipeData.instructions}</p>
+      </section>
+
+      <hr className="my-12" />
+
+      {/* ****NOTES*** */}
+      <section>
+        <h3 className="text-2xl mb-2">Notes</h3>
         {userId ? (
-          <Form method="post" ref={createNoteFormRef}>
-            <fieldset disabled={transition.state === "submitting"}>
+          <fetcher.Form method="post" ref={createNoteFormRef}>
+            <fieldset disabled={fetcher.state === "submitting"}>
               <div className="flex flex-nowrap ">
                 <div className="flex flex-col ">
                   <label className="font-bold" htmlFor="content">
-                    Note:{" "}
+                    Add:{" "}
                   </label>
                   <textarea
                     ref={createNoteContentRef}
@@ -281,7 +282,7 @@ export default function Recipe() {
                 </button>
               </div>
             </fieldset>
-          </Form>
+          </fetcher.Form>
         ) : (
           <Form method="post">
             <button
@@ -294,88 +295,124 @@ export default function Recipe() {
             </button>
           </Form>
         )}
-        <div className="mt-4">
-          <ul>
-            {notes.length ? (
-              notes?.map((note) => {
-                return (
-                  <li key={note.id} className="m-2 p-2 bg-stone-200">
-                    {/* TODO -- add metadata and make sure we sort the data on server in reverse chronological order */}
-                    {editNoteFormData?.id !== note.id ? (
-                      // static
-                      <div className="flex flex-nowrap justify-between">
-                        <p>{note.content}</p>
-                        <button
-                          onClick={() => {
-                            setEditNoteForm(note);
-                          }}
-                          disabled={transition.state === "loading"}
-                        >
-                          edit
-                        </button>
-                      </div>
-                    ) : (
-                      <Form method="post" ref={editNoteFormRef}>
-                        <div className="flex flex-nowrap justify-between">
-                          <div>
-                            <input
-                              hidden
-                              name="noteId"
-                              defaultValue={note.id}
-                            />
-                            <textarea
-                              disabled={transition.state === "submitting"}
-                              ref={editNoteContentRef}
-                              id="content"
-                              className="border-2 border-solid border-gray-400 rounded-md"
-                              name="content"
-                              defaultValue={editNoteFormData.content}
-                              aria-invalid={
-                                Boolean(actionData?.fieldErrors?.content) ||
-                                undefined
-                              }
-                              aria-describedby={
-                                actionData?.fieldErrors?.content
-                                  ? "content-error"
-                                  : undefined
-                              }
-                            />
-                            {actionData?.fieldErrors?.content ? (
-                              <p
-                                className="text-red-600"
-                                role="alert"
-                                id="content-error"
-                              >
-                                {actionData.fieldErrors.content}
-                              </p>
-                            ) : null}
-                          </div>
-                          <button
-                            onClick={() => setEditNoteForm(null)}
-                            type="button"
-                          >
-                            cancel
-                          </button>
-                          <button
-                            type="submit"
-                            name="actionId"
-                            value="updateNote"
-                            disabled={transition.state === "submitting"}
-                          >
-                            {isEditingNote ? "saving..." : "save"}
-                          </button>
-                        </div>
-                      </Form>
-                    )}
-                  </li>
-                );
-              })
-            ) : (
-              <p>No notes for this recipe</p>
-            )}
-          </ul>
-        </div>
-      </div>
+        <ul className="mt-4">
+          {notes.length ? (
+            notes?.map((note) => {
+              return (
+                <li key={note.id} className="my-2 p-2 bg-stone-200">
+                  {/* TODO -- add metadata and make sure we sort the data on server in reverse chronological order */}
+                  <NoteItem note={note} userId={userId} />
+                </li>
+              );
+            })
+          ) : (
+            <p>No notes for this recipe</p>
+          )}
+        </ul>
+      </section>
     </div>
+  );
+}
+
+type NoteProps = {
+  note: Note;
+  userId: User["id"] | null;
+};
+
+function NoteItem({ note, userId }: NoteProps) {
+  const fetcher = useFetcher();
+  const actionId = fetcher.submission?.formData.get("actionId");
+  const isSpecificNote =
+    Number(fetcher.submission?.formData.get("noteId")) === note.id;
+  const isUpdating = isSpecificNote && actionId === actionIds.updateNote;
+  const isDeleting = isSpecificNote && actionId === actionIds.deleteNote;
+
+  const showEditButton = userId === note.authorId;
+  const actionData = useActionData();
+
+  const [editNoteFormData, setEditNoteForm] = useState<Note | null>(null);
+  const editNoteFormRef = useRef<HTMLFormElement>(null);
+  const editNoteContentRef = useRef<HTMLTextAreaElement>(null);
+  console.log("fetcher.state", fetcher.state);
+
+  // after saving note update, reset and change out of edit mode
+  useEffect(() => {
+    if (!isUpdating) {
+      editNoteFormRef.current && editNoteFormRef.current.reset();
+      setEditNoteForm(null);
+    }
+  }, [isUpdating]);
+
+  // focus the input after opening edit form
+  useEffect(() => {
+    if (fetcher.state === "idle" && editNoteFormData) {
+      editNoteContentRef.current?.focus();
+    }
+  }, [fetcher.state, editNoteFormData]);
+
+  return (
+    <>
+      {editNoteFormData?.id !== note.id ? (
+        <div className="flex flex-nowrap justify-between">
+          <p>{note.content}</p>
+          {showEditButton ? (
+            <button
+              onClick={() => {
+                setEditNoteForm(note);
+              }}
+              disabled={isUpdating}
+            >
+              {isUpdating ? "..." : "edit"}
+            </button>
+          ) : null}
+        </div>
+      ) : (
+        <fetcher.Form method="post" ref={editNoteFormRef}>
+          <div className="flex flex-nowrap justify-between">
+            <div>
+              <input hidden name="noteId" defaultValue={note.id} />
+              <textarea
+                disabled={isUpdating || isDeleting}
+                ref={editNoteContentRef}
+                id="content"
+                className="border-2 border-solid border-gray-400 rounded-md"
+                name="content"
+                defaultValue={editNoteFormData.content}
+                aria-invalid={
+                  Boolean(actionData?.fieldErrors?.content) || undefined
+                }
+                aria-describedby={
+                  actionData?.fieldErrors?.content ? "content-error" : undefined
+                }
+              />
+              {actionData?.fieldErrors?.content ? (
+                <p className="text-red-600" role="alert" id="content-error">
+                  {actionData.fieldErrors.content}
+                </p>
+              ) : null}
+            </div>
+            <button
+              type="submit"
+              name="actionId"
+              value="updateNote"
+              disabled={isDeleting || isUpdating}
+            >
+              {isUpdating ? "saving..." : "save"}
+            </button>
+            <button
+              type="submit"
+              name="actionId"
+              value="deleteNote"
+              disabled={isDeleting || isUpdating}
+            >
+              {isDeleting ? "deleting... " : "delete"}
+            </button>
+            <button onClick={() => setEditNoteForm(null)} type="button">
+              cancel
+            </button>
+          </div>
+        </fetcher.Form>
+      )}
+    </>
   );
 }

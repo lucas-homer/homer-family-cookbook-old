@@ -19,7 +19,7 @@ export const loader: LoaderFunction = async ({ params }) => {
 export default function MealType() {
   const mealType = useLoaderData<MealTypeWithRecipes>();
   return (
-    <div>
+    <main className="p-8">
       <h1 className="text-4xl mb-8">{mealType.name}</h1>
       <ul className="pl-8">
         {mealType.recipes?.map((recipe) => (
@@ -30,6 +30,6 @@ export default function MealType() {
           </li>
         ))}
       </ul>
-    </div>
+    </main>
   );
 }

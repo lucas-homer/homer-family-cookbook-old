@@ -52,3 +52,9 @@ export async function updateNote({
     },
   });
 }
+
+export async function deleteNote(noteId: Note["id"]) {
+  return db.note.delete({
+    where: { id: noteId },
+  });
+}
