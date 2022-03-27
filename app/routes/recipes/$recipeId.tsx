@@ -289,9 +289,9 @@ export default function Recipe() {
               type="submit"
               name="actionId"
               value="login"
-              className="text-xl text-blue-700"
+              className="text-lg text-blue-700"
             >
-              Login
+              Login to add note
             </button>
           </Form>
         )}
@@ -333,7 +333,6 @@ function NoteItem({ note, userId }: NoteProps) {
   const [editNoteFormData, setEditNoteForm] = useState<Note | null>(null);
   const editNoteFormRef = useRef<HTMLFormElement>(null);
   const editNoteContentRef = useRef<HTMLTextAreaElement>(null);
-  console.log("fetcher.state", fetcher.state);
 
   // after saving note update, reset and change out of edit mode
   useEffect(() => {
